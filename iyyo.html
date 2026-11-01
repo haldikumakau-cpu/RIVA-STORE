@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RIVA STORE</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090909;color:#fff;font-family:Arial,sans-serif}
+header{padding:16px;background:#151515;border-bottom:2px solid #e50914;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:bold;color:#ff3030}
+button{background:#e50914;color:white;border:0;padding:11px 14px;border-radius:8px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.secondary{background:#333}
+.container{max-width:1100px;margin:auto;padding:18px}
+.banner{padding:25px;border-radius:15px;background:linear-gradient(120deg,#390000,#151515);border:1px solid #8e1010;margin-bottom:18px}
+.banner h1{font-size:30px;margin:0 0 10px}
+.info,.panel{background:#171717;padding:18px;border:1px solid #333;border-radius:12px;margin:18px 0}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;background:#101010;color:white;border:1px solid #444;border-radius:8px}
+textarea{min-height:75px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px}
+.product{background:#171717;border:1px solid #333;border-radius:12px;overflow:hidden}
+.product img{width:100%;height:155px;object-fit:cover;background:#222}
+.product-info{padding:12px}
+.product h3{margin:5px 0}
+.price{color:#ff4545;font-weight:bold}
+.muted{color:#aaa;font-size:13px}
+.product button{width:100%;margin-top:8px}
+.actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.actions button{padding:9px 12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.item{border-bottom:1px solid #333;padding:12px 0}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #333;margin:20px 0}
+footer{text-align:center;color:#999;padding:25px;border-top:1px solid #333}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="logo">RIVA STORE</div>
+ <div class="actions">
+  <button onclick="show('cart')">🛒 <span id="cartCount">0</span></button>
+  <button class="secondary" onclick="show('account')">Akun</button>
+  <button class="secondary" onclick="show('admin')">Admin</button>
+ </div>
+</header>
+
+<main class="container">
+ <section class="banner">
+  <h1>SELAMAT DATANG DI RIVA STORE</h1>
+  <p id="announcement">Belanja mudah, cepat, dan terpercaya!</p>
+  <button onclick="document.getElementById('catalog').scrollIntoView()">Belanja Sekarang</button>
+ </section>
+
+ <section class="info">
+  <h3>INFORMASI TOKO</h3>
+  <p id="storeInfo">Selamat berbelanja di RIVA STORE.</p>
+ </section>
+
+ <h2 id="catalog">KATALOG PRODUK</h2>
+ <input id="search" placeholder="Cari produk..." oninput="renderProducts()">
+ <select id="category" onchange="renderProducts()">
+  <option value="">Semua kategori</option>
+ </select>
+ <div class="products" id="products">Memuat produk...</div>
+
+ <!-- KERANJANG -->
+ <section class="panel hidden" id="cart">
+  <div class="row"><h2>Keranjang</h2><button class="secondary" onclick="closePanels()">Tutup</button></div>
+  <div id="cartItems"></div>
+  <h3>Total: <span id="cartTotal">Rp0</span></h3>
+  <p class="muted">Untuk checkout, silakan login terlebih dahulu.</p>
+  <button onclick="checkout()">Checkout WhatsApp</button>
+ </section>
+
+ <!-- AKUN PELANGGAN -->
+ <section class="panel hidden" id="account">
+  <div class="row"><h2>Akun Pelanggan</h2><button class="secondary" onclick="closePanels()">Tutup</button></div>
+
+  <div id="authBox">
+   <h3>Login / Daftar Akun</h3>
+   <input id="accountName" placeholder="Nama lengkap (untuk daftar)">
+   <input id="accountEmail" type="email" placeholder="Email">
+   <input id="accountPassword" type="password" placeholder="Password minimal 6 karakter">
+   <div class="actions">
+    <button onclick="registerUser()">Daftar</button>
+    <button class="secondary" onclick="loginUser()">Login</button>
+   </div>
+  </div>
+
+  <div id="profileBox" class="hidden">
+   <h3>Profil Saya</h3>
+   <p id="userEmail" class="muted"></p>
+   <input id="profileName" placeholder="Nama lengkap">
+   <textarea id="profileAddress" placeholder="Alamat pengiriman"></textarea>
+   <button onclick="saveProfile()">Simpan Profil</button>
+   <hr>
+   <h3>Riwayat Pesanan</h3>
+   <div id="myOrders">Memuat pesanan...</div>
+   <button class="secondary" onclick="logoutUser()">Logout</button>
+  </div>
+ </section>
+
+ <!-- PANEL ADMIN -->
+ <section class="panel hidden" id="admin">
+  <div class="row"><h2>ADMIN PANEL</h2><button class="secondary" onclick="closePanels()">Tutup</button></div>
+
+  <div id="adminLogin">
+   <input id="adminEmail" type="email" placeholder="Email admin">
+   <input id="adminPassword" type="password" placeholder="Password">
+   <button onclick="loginAdmin()">Login Admin</button>
+  </div>
+
+  <div id="adminContent" class="hidden">
+   <div class="row">
+    <h3>Kelola Toko</h3>
+    <button class="secondary" onclick="logoutUser()">Logout</button>
+   </div>
+
+   <h3>Tambah / Edit Produk</h3>
+   <form id="productForm">
+    <input id="pName" placeholder="Nama produk" required>
+    <input id="pPrice" type="number" min="0" placeholder="Harga" required>
+    <input id="pStock" type="number" min="0" placeholder="Stok" required>
+    <input id="pCategory" placeholder="Kategori" required>
+    <textarea id="pDescription" placeholder="Deskripsi produk"></textarea>
+    <label>Foto produk</label>
+    <input id="pImage" type="file" accept="image/*">
+    <button id="saveProduct">Simpan Produk</button>
+    <button type="button" class="secondary" onclick="resetProduct()">Batal Edit</button>
+   </form>
+
+   <h3>Daftar Produk</h3>
+   <div id="adminProducts"></div>
+
+   <hr>
+   <h3>Pengaturan Informasi Toko</h3>
+   <input id="editAnnouncement" placeholder="Pengumuman">
+   <textarea id="editInfo" placeholder="Informasi toko"></textarea>
+   <button onclick="saveSettings()">Simpan Informasi</button>
+
+   <hr>
+   <h3>Pesanan Pelanggan</h3>
+   <div id="allOrders">Memuat pesanan...</div>
+  </div>
+ </section>
+</main>
+
+<footer>© 2026 RIVA STORE | Belanja dengan mudah</footer>
+
+<script type="module">
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+
+import {
+ getAuth,onAuthStateChanged,signInWithEmailAndPassword,
+ createUserWithEmailAndPassword,signOut,updateProfile
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+
+import {
+ getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,
+ onSnapshot,setDoc,getDoc,query,where,orderBy,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+import {
+ getStorage,ref,uploadBytes,getDownloadURL,deleteObject
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
+
+/* ISI FIREBASE CONFIG MILIK KAMU */
+const firebaseConfig={
+ apiKey:"ISI_API_KEY",
+ authDomain:"ISI_AUTH_DOMAIN",
+ projectId:"ISI_PROJECT_ID",
+ storageBucket:"ISI_STORAGE_BUCKET",
+ messagingSenderId:"ISI_SENDER_ID",
+ appId:"ISI_APP_ID"
+};
+
+const ADMIN_EMAIL="admin@email.com";
+const WHATSAPP="6285824689815";
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const storage=getStorage(app);
+
+let user=null,products=[],cart=JSON.parse(localStorage.getItem("rivaCart")||"{}");
+let editingId=null,stopMyOrders=null,stopAllOrders=null;
+
+const $=id=>document.getElementById(id);
+const money=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+
+function safe(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+function admin(){return !!user&&user.email===ADMIN_EMAIL}
+function requireAdmin(){if(!admin())throw Error("Akses admin ditolak");}
+
+window.show=id=>{
+ closePanels();
+ $(id).classList.remove("hidden");
+ if(id==="cart")renderCart();
+ if(id==="account")renderAccount();
+ if(id==="admin")renderAdminState();
+};
+window.closePanels=()=>{
+ ["cart","account","admin"].forEach(id=>$(id).classList.add("hidden"));
+};
+
+function saveCart(){
+ localStorage.setItem("rivaCart",JSON.stringify(cart));
+ renderCart();
+}
+function renderProducts(){
+ const term=$("search").value.toLowerCase();
+ const cat=$("category").value;
+ const list=products.filter(p=>
+  (p.name||"").toLowerCase().includes(term)&&(!cat||p.category===cat)
+ );
+ $("products").innerHTML=list.length?list.map(p=>`
+ <article class="product">
+  <img src="${safe(p.image||"")}" alt="${safe(p.name)}">
+  <div class="product-info">
+   <h3>${safe(p.name)}</h3>
+   <p class="price">${money(p.price)}</p>
+   <p class="muted">${safe(p.category)}</p>
+   <p class="muted">${safe(p.description)}</p>
+   <p class="muted">Stok: ${Number(p.stock||0)}</p>
+   <button data-add="${safe(p.id)}" ${Number(p.stock)<=0?"disabled":""}>
+    ${Number(p.stock)<=0?"Stok Habis":"Tambah ke Keranjang"}
+   </button>
+  </div>
+ </article>`).join(""):"<p>Produk belum tersedia.</p>";
+
+ $("products").querySelectorAll("[data-add]").forEach(b=>{
+  b.onclick=()=>addCart(b.dataset.add);
+ });
+}
+function addCart(id){
+ const p=products.find(x=>x.id===id);
+ if(!p)return;
+ if(Number(cart[id]||0)>=Number(p.stock||0)){alert("Stok tidak mencukupi");return;}
+ cart[id]=Number(cart[id]||0)+1;
+ saveCart();
+}
+function renderCart(){
+ let total=0,count=0;
+ const entries=Object.entries(cart).filter(([id,q])=>products.some(p=>p.id===id)&&q>0);
+ $("cartItems").innerHTML=entries.length?entries.map(([id,q])=>{
+  const p=products.find(x=>x.id===id);
+  total+=Number(p.price)*q;count+=q;
+  return `<div class="item row">
+   <div><b>${safe(p.name)}</b><br><small>${money(p.price)} × ${q}</small></div>
+   <div class="actions">
+    <button class="secondary" data-minus="${id}">−</button>
+    <button class="secondary" data-plus="${id}">+</button>
+    <button data-remove="${id}">Hapus</button>
+   </div></div>`;
+ }).join(""):"<p>Keranjang kosong.</p>";
+ $("cartTotal").textContent=money(total);
+ $("cartCount").textContent=count;
+
+ $("cartItems").querySelectorAll("[data-minus]").forEach(b=>b.onclick=()=>qty(b.dataset.minus,-1));
+ $("cartItems").querySelectorAll("[data-plus]").forEach(b=>b.onclick=()=>qty(b.dataset.plus,1));
+ $("cartItems").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{delete cart[b.dataset.remove];saveCart();});
+}
+function qty(id,n){
+ const p=products.find(x=>x.id===id),next=Number(cart[id]||0)+n;
+ if(next<=0)delete cart[id];
+ else if(next>Number(p?.stock||0)){alert("Stok tidak mencukupi");return;}
+ else cart[id]=next;
+ saveCart();
+}
+
+/* AKUN PELANGGAN */
+window.registerUser=async()=>{
+ try{
+  const name=$("accountName").value.trim();
+  const email=$("accountEmail").value.trim();
+  const password=$("accountPassword").value;
+  if(!name)throw Error("Masukkan nama lengkap");
+  const cred=await createUserWithEmailAndPassword(auth,email,password);
+  await updateProfile(cred.user,{displayName:name});
+  await setDoc(doc(db,"users",cred.user.uid),{name,address:"",email});
+  alert("Akun berhasil dibuat!");
+ }catch(e){alert("Pendaftaran gagal: "+e.message);}
+};
+window.loginUser=async()=>{
+ try{
+  await signInWithEmailAndPassword(auth,$("accountEmail").value.trim(),$("accountPassword").value);
+  alert("Login berhasil!");
+ }catch(e){alert("Login gagal: "+e.message);}
+};
+window.loginAdmin=async()=>{
+ try{
+  const c=await signInWithEmailAndPassword(auth,$("adminEmail").value.trim(),$("adminPassword").value);
+  if(c.user.email!==ADMIN_EMAIL){await signOut(auth);throw Error("Email bukan admin");}
+  alert("Login admin berhasil!");
+ }catch(e){alert(e.message);}
+};
+window.logoutUser=()=>signOut(auth);
+
+function renderAccount(){
+ $("authBox").classList.toggle("hidden",!!user);
+ $("profileBox").classList.toggle("hidden",!user);
+ if(user){
+  $("userEmail").textContent=user.email||"";
+  loadProfile();
+  listenMyOrders();
+ }
+}
+async function loadProfile(){
+ if(!user)return;
+ const snap=await getDoc(doc(db,"users",user.uid));
+ const d=snap.exists()?snap.data():{};
+ $("profileName").value=d.name||user.displayName||"";
+ $("profileAddress").value=d.address||"";
+}
+window.saveProfile=async()=>{
+ try{
+  if(!user)throw Error("Login terlebih dahulu");
+  const name=$("profileName").value.trim();
+  const address=$("profileAddress").value.trim();
+  await setDoc(doc(db,"users",user.uid),{name,address,email:user.email},{merge:true});
+  await updateProfile(user,{displayName:name});
+  alert("Profil berhasil disimpan!");
+ }catch(e){alert(e.message);}
+};
+
+/* RIWAYAT PESANAN */
+function listenMyOrders(){
+ if(!user)return;
+ if(stopMyOrders)stopMyOrders();
+ const q=query(collection(db,"orders"),where("uid","==",user.uid));
+ stopMyOrders=onSnapshot(q,snap=>{
+  const list=snap.docs.map(d=>({id:d.id,...d.data()}));
+  list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("myOrders").innerHTML=list.length?list.map(o=>`
+   <div class="item">
+    <b>Pesanan #${safe(o.id.slice(-6))}</b>
+    <p>${money(o.total)} | ${safe(o.status)}</p>
+    <small>${safe((o.items||[]).map(i=>i.name+" x "+i.qty).join(", "))}</small>
+   </div>`).join(""):"<p>Belum ada pesanan.</p>";
+ });
+}
+
+window.checkout=async()=>{
+ try{
+  if(!user)throw Error("Silakan login akun pelanggan dahulu.");
+  const entries=Object.entries(cart).filter(([id,q])=>products.some(p=>p.id===id)&&q>0);
+  if(!entries.length)throw Error("Keranjang masih kosong.");
+
+  const profile=await getDoc(doc(db,"users",user.uid));
+  const data=profile.exists()?profile.data():{};
+  const name=data.name||user.displayName||"Pelanggan";
+  const address=data.address||"Belum diisi";
+
+  let total=0;
+  const items=entries.map(([id,qty])=>{
+   const p=products.find(x=>x.id===id);
+   if(qty>Number(p.stock||0))throw Error("Stok "+p.name+" tidak mencukupi.");
+   const subtotal=Number(p.price)*qty;
+   total+=subtotal;
+   return {productId:id,name:p.name,price:Number(p.price),qty,subtotal};
+  });
+
+  const order=await addDoc(collection(db,"orders"),{
+   uid:user.uid,email:user.email,name,address,items,total,
+   status:"Menunggu konfirmasi",createdAt:serverTimestamp()
+  });
+
+  let message=`PESANAN RIVA STORE\nNo. Pesanan: ${order.id}\nNama: ${name}\nAlamat: ${address}\n\n`;
+  items.forEach(i=>message+=`${i.name} x ${i.qty} = ${money(i.subtotal)}\n`);
+  message+=`\nTOTAL: ${money(total)}\nMohon konfirmasi pesanan saya.`;
+
+  cart={};saveCart();
+  window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(message),"_blank");
+  alert("Pesanan tersimpan. Silakan lanjutkan konfirmasi di WhatsApp.");
+ }catch(e){alert(e.message);}
+};
+
+/* ADMIN: PRODUK */
+window.resetProduct=()=>{
+ editingId=null;$("productForm").reset();$("saveProduct").textContent="Simpan Produk";
+};
+function editProduct(id){
+ const p=products.find(x=>x.id===id);if(!p)return;
+ editingId=id;
+ $("pName").value=p.name||"";
+ $("pPrice").value=p.price||0;
+ $("pStock").value=p.stock||0;
+ $("pCategory").value=p.category||"";
+ $("pDescription").value=p.description||"";
+ $("saveProduct").textContent="Update Produk";
+ $("productForm").scrollIntoView();
+}
+$("productForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ try{
+  requireAdmin();
+  const name=$("pName").value.trim(),price=Number($("pPrice").value);
+  const stock=Number($("pStock").value),category=$("pCategory").value.trim();
+  const description=$("pDescription").value.trim(),file=$("pImage").files[0];
+  if(price<0||stock<0)throw Error("Harga dan stok tidak boleh negatif.");
+  if(file&&(!file.type.startsWith("image/")||file.size>5*1024*1024))
+   throw Error("Foto harus gambar dan maksimal 5 MB.");
+
+  $("saveProduct").disabled=true;
+  const old=editingId?products.find(p=>p.id===editingId):null;
+  let image=old?.image||"",imagePath=old?.imagePath||"";
+
+  if(file){
+   const path="products/"+Date.now()+"-"+Math.random().toString(36).slice(2);
+   await uploadBytes(ref(storage,path),file);
+   image=await getDownloadURL(ref(storage,path));imagePath=path;
+  }
+  const data={name,price,stock,category,description,image,imagePath};
+
+  if(editingId){
+   await updateDoc(doc(db,"products",editingId),data);
+   if(file&&old?.imagePath){try{await deleteObject(ref(storage,old.imagePath));}catch(e){}}
+  }else await addDoc(collection(db,"products"),data);
+
+  alert("Produk tersimpan!");resetProduct();
+ }catch(e){alert("Gagal: "+e.message);}
+ finally{$("saveProduct").disabled=false;}
+});
+async function deleteProduct(id){
+ try{
+  requireAdmin();
+  if(!confirm("Hapus produk ini?"))return;
+  const p=products.find(x=>x.id===id);
+  await deleteDoc(doc(db,"products",id));
+  if(p?.imagePath){try{await deleteObject(ref(storage,p.imagePath));}catch(e){}}
+  delete cart[id];saveCart();
+ }catch(e){alert(e.message);}
+}
+function renderAdminProducts(){
+ $("adminProducts").innerHTML=products.length?products.map(p=>`
+  <div class="item row">
+   <span>${safe(p.name)} — ${money(p.price)} — Stok ${p.stock}</span>
+   <div class="actions">
+    <button class="secondary" data-edit="${p.id}">Edit</button>
+    <button data-del="${p.id}">Hapus</button>
+   </div>
+  </div>`).join(""):"<p>Belum ada produk.</p>";
+ $("adminProducts").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editProduct(b.dataset.edit));
+ $("adminProducts").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteProduct(b.dataset.del));
+}
+
+/* ADMIN: INFORMASI TOKO */
+async function loadSettings(){
+ const s=await getDoc(doc(db,"settings","store"));
+ if(s.exists()){
+  const d=s.data();
+  $("announcement").textContent=d.announcement||"";
+  $("storeInfo").textContent=d.info||"";
+  $("editAnnouncement").value=d.announcement||"";
+  $("editInfo").value=d.info||"";
+ }
+}
+window.saveSettings=async()=>{
+ try{
+  requireAdmin();
+  const announcement=$("editAnnouncement").value.trim();
+  const info=$("editInfo").value.trim();
+  await setDoc(doc(db,"settings","store"),{announcement,info});
+  $("announcement").textContent=announcement;
+  $("storeInfo").textContent=info;
+  alert("Informasi toko diperbarui!");
+ }catch(e){alert(e.message);}
+};
+
+/* ADMIN: SEMUA PESANAN */
+function listenAllOrders(){
+ if(stopAllOrders)stopAllOrders();
+ const q=query(collection(db,"orders"));
+ stopAllOrders=onSnapshot(q,snap=>{
+  const list=snap.docs.map(d=>({id:d.id,...d.data()}));
+  list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("allOrders").innerHTML=list.length?list.map(o=>`
+   <div class="item">
+    <b>Pesanan #${safe(o.id.slice(-6))}</b>
+    <p>${safe(o.name)} — ${money(o.total)}</p>
+    <p class="muted">${safe(o.email)} | ${safe(o.address)}</p>
+    <p>${safe((o.items||[]).map(i=>i.name+" x "+i.qty).join(", "))}</p>
+    <select data-status="${o.id}">
+     ${["Menunggu konfirmasi","Diproses","Dikirim","Selesai","Dibatalkan"].map(s=>
+      `<option ${o.status===s?"selected":""}>${s}</option>`).join("")}
+    </select>
+    <button data-update="${o.id}">Update Status</button>
+   </div>`).join(""):"<p>Belum ada pesanan.</p>";
+
+  $("allOrders").querySelectorAll("[data-update]").forEach(b=>{
+   b.onclick=async()=>{
+    try{
+     requireAdmin();
+     const id=b.dataset.update;
+     const status=$("allOrders").querySelector(`[data-status="${id}"]`).value;
+     await updateDoc(doc(db,"orders",id),{status});
+     alert("Status pesanan diperbarui!");
+    }catch(e){alert(e.message);}
+   };
+  });
+ });
+}
+
+function renderAdminState(){
+ const yes=admin();
+ $("adminLogin").classList.toggle("hidden",yes);
+ $("adminContent").classList.toggle("hidden",!yes);
+ if(yes){loadSettings();listenAllOrders();renderAdminProducts();}
+}
+
+/* LOGIN STATE */
+onAuthStateChanged(auth,async u=>{
+ user=u;
+ if(u){
+  if(u.email===ADMIN_EMAIL)renderAdminState();
+  if(!$("account").classList.contains("hidden"))renderAccount();
+ }else{
+  if(stopMyOrders){stopMyOrders();stopMyOrders=null;}
+  if(stopAllOrders){stopAllOrders();stopAllOrders=null;}
+  $("authBox").classList.remove("hidden");
+  $("profileBox").classList.add("hidden");
+  $("adminLogin").classList.remove("hidden");
+  $("adminContent").classList.add("hidden");
+ }
+});
+
+onSnapshot(collection(db,"products"),snap=>{
+ products=snap.docs.map(d=>({id:d.id,...d.data()}));
+ const old=$("category").value;
+ const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];
+ $("category").innerHTML='<option value="">Semua kategori</option>'+
+ cats.map(c=>`<option value="${safe(c)}">${safe(c)}</option>`).join("");
+ $("category").value=cats.includes(old)?old:"";
+ renderProducts();renderCart();renderAdminProducts();
+},e=>{
+ console.error(e);$("products").textContent="Gagal memuat produk. Periksa Firebase.";
+});
+
+loadSettings().catch(()=>{});
+</script>
+</body>
+</html>
